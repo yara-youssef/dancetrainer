@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:phone": "vite --host",
+    "cert": "mkdir -p .cert && openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj /CN=dancetrainer -keyout .cert/key.pem -out .cert/cert.pem",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",

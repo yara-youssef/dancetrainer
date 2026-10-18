@@ -1,27 +1,33 @@
 <script setup lang="ts">
-import { POSES, type PoseDefinition } from '@/poses'
+import { POSES } from '@/poses'
+import { MOVEMENTS } from '@/movements'
+import type { Exercise } from '@/exercises'
+import PoseFigure from './PoseFigure.vue'
 
-defineEmits<{ select: [pose: PoseDefinition] }>()
+defineEmits<{ select: [exercise: Exercise] }>()
 
-const groups = (['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
-  category,
-  poses: POSES.filter((p) => p.category === category),
-}))
+const groups: { title: string; note?: string; items: Exercise[] }[] = [
+  { title: 'Movement', note: 'Counted and checked rep by rep', items: MOVEMENTS },
+  ...(['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
+    title: `${category} positions`,
+    items: POSES.filter((p) => p.category === category),
+  })),
+]
 </script>
 
 <template>
   <section class="picker">
     <p class="intro">
-      Pick a position to practise. Your camera watches your form and tells you what to fix, live.
+      Pick a movement or a position to practise. Your camera watches your form and tells you what to fix, live.
       Everything runs on your device: no video leaves your browser.
     </p>
-    <div v-for="group in groups" :key="group.category" class="group">
-      <h2>{{ group.category }}</h2>
+    <div v-for="group in groups" :key="group.title" class="group">
+      <h2>{{ group.title }}<span v-if="group.note" class="note"> · {{ group.note }}</span></h2>
       <div class="grid">
-        <button v-for="pose in group.poses" :key="pose.id" class="card" @click="$emit('select', pose)">
-          <span class="emoji" aria-hidden="true">{{ pose.emoji }}</span>
-          <span class="name">{{ pose.name }}</span>
-          <span class="summary">{{ pose.summary }}</span>
+        <button v-for="item in group.items" :key="item.id" class="card" @click="$emit('select', item)">
+          <span class="figure" aria-hidden="true"><PoseFigure :illustration="item.illustration" /></span>
+          <span class="name">{{ item.name }}</span>
+          <span class="summary">{{ item.summary }}</span>
         </button>
       </div>
     </div>
@@ -61,11 +67,20 @@ const groups = (['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
   transform: translateY(-2px);
   border-color: var(--accent);
 }
-.emoji {
-  font-size: 2rem;
+.figure {
+  display: block;
+  width: 96px;
+  aspect-ratio: 1;
+  margin-bottom: 0.25rem;
 }
 .group + .group {
   margin-top: 2rem;
+}
+.note {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  font-weight: 500;
 }
 h2 {
   font-size: 0.8rem;
@@ -81,5 +96,31 @@ h2 {
 .summary {
   color: var(--muted);
   font-size: 0.9rem;
+}
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .card {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: 0.9rem;
+    align-items: center;
+    padding: 0.8rem;
+  }
+  .figure {
+    grid-row: 1 / 3;
+    width: 72px;
+    margin: 0;
+  }
+  .name {
+    align-self: end;
+  }
+  .summary {
+    align-self: start;
+    font-size: 0.85rem;
+  }
 }
 </style>

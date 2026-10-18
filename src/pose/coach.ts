@@ -1,3 +1,4 @@
+import type { MovementFeedback } from '@/movements/types'
 import type { Feedback } from './engine'
 
 /** Decides what (if anything) to say out loud, without nagging. */
@@ -62,10 +63,21 @@ export class VoiceCoach {
   }
 }
 
-export function speak(text: string) {
-  if (typeof speechSynthesis === 'undefined') return
-  speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.rate = 1.05
-  speechSynthesis.speak(u)
+/** Voice for movements: says each rep's verdict as it happens, plus occasional positioning hints. */
+export class MovementVoice {
+  private lastSpokenAt = -Infinity
+  private lastHint = ''
+  private lastHintAt = -Infinity
+
+  next(fb: MovementFeedback, now: number): string | null {
+    if (fb.say) {
+      this.lastSpokenAt = now
+      return fb.say
+    }
+    if (!fb.hint || now - this.lastSpokenAt < 4000) return null
+    if (fb.hint === this.lastHint && now - this.lastHintAt < 12000) return null
+    this.lastHint = fb.hint
+    this.lastHintAt = this.lastSpokenAt = now
+    return fb.hint
+  }
 }

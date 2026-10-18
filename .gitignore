@@ -40,3 +40,6 @@ __screenshots__/
 
 # Self-hosted pose model (see README)
 public/models/
+
+# Local HTTPS certificate for testing on a phone (npm run cert)
+.cert/

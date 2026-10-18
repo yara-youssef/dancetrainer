@@ -55,7 +55,7 @@ body {
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 16px 3rem;
+  padding: 0 max(16px, env(safe-area-inset-right)) 3rem max(16px, env(safe-area-inset-left));
 }
 
 button,
@@ -68,6 +68,12 @@ button,
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
+  /* Comfortable touch targets on phones. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
 }
 button:disabled {
   opacity: 0.6;

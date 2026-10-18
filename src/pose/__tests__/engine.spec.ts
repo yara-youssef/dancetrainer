@@ -9,7 +9,6 @@ const toy = definePose<PoseFrame>({
   id: 'toy',
   name: 'Toy',
   category: 'Strength',
-  emoji: '',
   summary: '',
   cameraTip: '',
   cues: [],

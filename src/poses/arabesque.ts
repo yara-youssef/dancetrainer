@@ -1,4 +1,4 @@
-import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
+import { L, SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
 import { angleFromVertical, midpoint } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
 import { LOWER_BODY, NOT_VISIBLE_HINT, isVisible, legLength, nearSide, pointedFoot, straightLeg, jointAngle } from './common'
@@ -20,7 +20,6 @@ export const arabesque = definePose<ArabesqueCtx>({
   id: 'arabesque',
   name: 'Arabesque',
   category: 'Ballet',
-  emoji: '🦢',
   summary: 'Balance on one straight leg with the other extended long behind you and the front arm reaching forward.',
   cameraTip: 'Stand side-on to the camera, 2–3 m away, so it sees your profile from fingertips to back foot.',
   cues: [
@@ -31,6 +30,33 @@ export const arabesque = definePose<ArabesqueCtx>({
     'Chest lifted, back long',
     'Front arm reaching forward at shoulder height',
   ],
+
+  illustration: {
+    view: 'side',
+    points: {
+      [L.NOSE]: [0.39, 0.16],
+      [L.LEFT_EAR]: [0.41, 0.15],
+      [L.RIGHT_EAR]: [0.42, 0.15],
+      [L.LEFT_SHOULDER]: [0.43, 0.22],
+      [L.RIGHT_SHOULDER]: [0.44, 0.22],
+      [L.LEFT_ELBOW]: [0.32, 0.22],
+      [L.LEFT_WRIST]: [0.21, 0.21],
+      [L.LEFT_INDEX]: [0.17, 0.21],
+      [L.RIGHT_ELBOW]: [0.5, 0.25],
+      [L.RIGHT_WRIST]: [0.58, 0.28],
+      [L.RIGHT_INDEX]: [0.62, 0.29],
+      [L.RIGHT_HIP]: [0.5, 0.5],
+      [L.RIGHT_KNEE]: [0.5, 0.72],
+      [L.RIGHT_ANKLE]: [0.5, 0.94],
+      [L.RIGHT_HEEL]: [0.51, 0.96],
+      [L.RIGHT_FOOT_INDEX]: [0.45, 0.97],
+      [L.LEFT_HIP]: [0.51, 0.5],
+      [L.LEFT_KNEE]: [0.73, 0.48],
+      [L.LEFT_ANKLE]: [0.95, 0.46],
+      [L.LEFT_HEEL]: [0.95, 0.44],
+      [L.LEFT_FOOT_INDEX]: [1.0, 0.455],
+    },
+  },
 
   prepare(frame) {
     // The far leg is partly hidden in profile, so accept lower visibility for the legs.

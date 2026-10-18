@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { L } from '@/pose/landmarks'
 import type { PoseDefinition } from '../types'
 import { arabesque } from '../arabesque'
+import { attitude } from '../attitude'
 import { releve } from '../releve'
 import { plie } from '../plie'
 import { tendu } from '../tendu'
@@ -355,5 +356,27 @@ describe('side plank (front view)', () => {
       [L.RIGHT_ANKLE]: [0.52, 0.94],
     })
     expect(standing).toMatch(/Get into a side plank/)
+  })
+})
+
+describe('attitude derrière (side view)', () => {
+  const { raw, ready } = checker(attitude, attitude.illustration.points)
+
+  it('accepts a good attitude', () => {
+    expect(statuses(ready())).toSatisfy(allGood)
+  })
+
+  it('catches the knee dropping below the foot', () => {
+    const r = ready({ [L.LEFT_KNEE]: [0.68, 0.55], [L.LEFT_ANKLE]: [0.84, 0.45], [L.LEFT_HEEL]: [0.83, 0.43], [L.LEFT_FOOT_INDEX]: [0.88, 0.42] })
+    expect(r['knee-over-foot']!.status).toBe('bad')
+  })
+
+  it('asks for an arm overhead', () => {
+    const r = ready({ [L.LEFT_ELBOW]: [0.34, 0.3], [L.LEFT_WRIST]: [0.3, 0.4] })
+    expect(r['arm-up']!.status).toBe('bad')
+  })
+
+  it('tells a straight back leg apart from attitude', () => {
+    expect(raw({ [L.LEFT_KNEE]: [0.73, 0.48], [L.LEFT_ANKLE]: [0.95, 0.46] })).toMatch(/arabesque/)
   })
 })

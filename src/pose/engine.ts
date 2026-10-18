@@ -38,18 +38,17 @@ interface Tracked {
 /** Turns a stream of pose frames into stable, human-friendly feedback for one pose. */
 export class FeedbackEngine {
   private tracked = new Map<string, Tracked>()
-  private smoothed: PoseFrame | null = null
+  private smoother: Smoother
   private holdStart: number | null = null
   private bestHold = 0
   private readonly debounceMs: number
-  private readonly smoothing: number
 
   constructor(
     private pose: PoseDefinition,
     opts: EngineOptions = {},
   ) {
     this.debounceMs = opts.debounceMs ?? 350
-    this.smoothing = opts.smoothing ?? 0.5
+    this.smoother = new Smoother(opts.smoothing ?? 0.5)
   }
 
   update(raw: PoseFrame | null, now: number): Feedback {
@@ -59,10 +58,10 @@ export class FeedbackEngine {
       return { phase, hint, checks: this.idleChecks(), score: 0, holdSeconds: 0, bestHold: this.bestHold }
     }
     if (!raw) {
-      this.smoothed = null
+      this.smoother.reset()
       return empty('no-person', 'Step into view of the camera.')
     }
-    const frame = (this.smoothed = this.smooth(raw))
+    const frame = this.smoother.push(raw)
     const prep = this.pose.prepare(frame)
     if (!prep.ready) return empty('not-ready', prep.hint)
 
@@ -106,11 +105,23 @@ export class FeedbackEngine {
     t.shown = { ...t.shown, detail: view.detail }
     return t.shown
   }
+}
 
-  private smooth(frame: PoseFrame): PoseFrame {
-    const prev = this.smoothed
-    const a = this.smoothing
-    if (!prev || a >= 1) return frame
+/** Exponential smoothing of landmark positions; visibility is always the latest value. */
+export class Smoother {
+  private prev: PoseFrame | null = null
+
+  /** @param alpha weight of the newest frame (1 = no smoothing). */
+  constructor(private alpha = 0.5) {}
+
+  reset() {
+    this.prev = null
+  }
+
+  push(frame: PoseFrame): PoseFrame {
+    const prev = this.prev
+    const a = this.alpha
+    if (!prev || a >= 1) return (this.prev = frame)
     const mix = (cur: Point[], old: Point[]) =>
       cur.map((p, i) => {
         const o = old[i] ?? p
@@ -121,6 +132,6 @@ export class FeedbackEngine {
           visibility: p.visibility,
         }
       })
-    return { image: mix(frame.image, prev.image), world: mix(frame.world, prev.world) }
+    return (this.prev = { image: mix(frame.image, prev.image), world: mix(frame.world, prev.world) })
   }
 }

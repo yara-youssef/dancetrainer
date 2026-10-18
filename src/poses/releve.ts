@@ -21,7 +21,6 @@ export const releve = definePose<ReleveCtx>({
   id: 'releve',
   name: 'Relevé',
   category: 'Ballet',
-  emoji: '🦶',
   summary: 'Rise onto the balls of both feet with straight legs and the body stacked in one vertical line.',
   cameraTip: 'Stand side-on to the camera with the camera low (about knee height) so it sees your feet clearly.',
   cues: [
@@ -30,6 +29,33 @@ export const releve = definePose<ReleveCtx>({
     'Shoulders over hips over feet: one vertical line',
     'Pelvis neutral: tailbone long, no arched back',
   ],
+
+  illustration: {
+    view: 'side',
+    points: {
+      [L.NOSE]: [0.47, 0.13],
+      [L.LEFT_EAR]: [0.5, 0.12],
+      [L.LEFT_SHOULDER]: [0.5, 0.2],
+      [L.LEFT_ELBOW]: [0.46, 0.34],
+      [L.LEFT_WRIST]: [0.44, 0.47],
+      [L.LEFT_INDEX]: [0.45, 0.51],
+      [L.LEFT_HIP]: [0.5, 0.5],
+      [L.LEFT_KNEE]: [0.5, 0.7],
+      [L.LEFT_ANKLE]: [0.5, 0.86],
+      [L.LEFT_HEEL]: [0.53, 0.88],
+      [L.LEFT_FOOT_INDEX]: [0.47, 0.94],
+      [L.RIGHT_EAR]: [0.52, 0.12],
+      [L.RIGHT_SHOULDER]: [0.52, 0.2],
+      [L.RIGHT_ELBOW]: [0.48, 0.34],
+      [L.RIGHT_WRIST]: [0.46, 0.47],
+      [L.RIGHT_INDEX]: [0.47, 0.51],
+      [L.RIGHT_HIP]: [0.52, 0.5],
+      [L.RIGHT_KNEE]: [0.52, 0.7],
+      [L.RIGHT_ANKLE]: [0.52, 0.86],
+      [L.RIGHT_HEEL]: [0.55, 0.88],
+      [L.RIGHT_FOOT_INDEX]: [0.49, 0.94],
+    },
+  },
 
   prepare(frame) {
     const s = SIDES[nearSide(frame)]

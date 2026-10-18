@@ -19,6 +19,16 @@ export interface FormCheck<C> {
   evaluate(ctx: C): CheckResult
 }
 
+export interface Illustration {
+  view: 'front' | 'side'
+  /** Landmark index → [x, y] in the same layout as image landmarks (y down, figure ~1 tall). */
+  points: Record<number, [number, number]>
+  /** For movements: a second position drawn faintly behind (e.g. the bottom of a push-up). */
+  ghost?: Record<number, [number, number]>
+  /** For turns: draws a rotation arrow around the figure. */
+  spin?: boolean
+}
+
 export type Preparation<C> =
   | { ready: true; ctx: C }
   /** The person isn't in the position yet (or isn't fully visible). */
@@ -28,12 +38,13 @@ export interface PoseDefinition<C = unknown> {
   id: string
   name: string
   category: 'Ballet' | 'Yoga' | 'Strength'
-  emoji: string
   summary: string
   /** Where to put the camera / which way to face. */
   cameraTip: string
   /** Key things to think about, shown before practising. */
   cues: string[]
+  /** Reference figure of the correct position, drawn as an illustration. */
+  illustration: Illustration
   prepare(frame: PoseFrame): Preparation<C>
   /** Checks in priority order: the first failing one is the one spoken aloud. */
   checks: FormCheck<C>[]

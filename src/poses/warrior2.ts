@@ -32,7 +32,6 @@ export const warrior2 = definePose<WarriorCtx>({
   id: 'warrior-2',
   name: 'Warrior II',
   category: 'Yoga',
-  emoji: '⚔️',
   summary: 'A wide lunge with the front knee over the ankle, back leg straight and arms stretched out at shoulder height.',
   cameraTip: 'Face the camera with your feet wide, so your chest faces the lens. Keep your whole body in view.',
   cues: [
@@ -42,6 +41,33 @@ export const warrior2 = definePose<WarriorCtx>({
     'Arms straight, at shoulder height',
     'Shoulders relaxed and level',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.53, 0.21],
+      [L.LEFT_EAR]: [0.53, 0.2],
+      [L.RIGHT_EAR]: [0.47, 0.2],
+      [L.LEFT_SHOULDER]: [0.55, 0.3],
+      [L.RIGHT_SHOULDER]: [0.45, 0.3],
+      [L.LEFT_ELBOW]: [0.68, 0.3],
+      [L.RIGHT_ELBOW]: [0.32, 0.3],
+      [L.LEFT_WRIST]: [0.8, 0.3],
+      [L.RIGHT_WRIST]: [0.2, 0.3],
+      [L.LEFT_INDEX]: [0.84, 0.3],
+      [L.RIGHT_INDEX]: [0.16, 0.3],
+      [L.LEFT_HIP]: [0.54, 0.55],
+      [L.RIGHT_HIP]: [0.46, 0.55],
+      [L.LEFT_KNEE]: [0.74, 0.6],
+      [L.LEFT_ANKLE]: [0.75, 0.85],
+      [L.LEFT_HEEL]: [0.73, 0.86],
+      [L.LEFT_FOOT_INDEX]: [0.8, 0.86],
+      [L.RIGHT_KNEE]: [0.33, 0.7],
+      [L.RIGHT_ANKLE]: [0.2, 0.85],
+      [L.RIGHT_HEEL]: [0.19, 0.86],
+      [L.RIGHT_FOOT_INDEX]: [0.21, 0.88],
+    },
+  },
 
   prepare(frame) {
     if (!isVisible(frame, [...LOWER_BODY, ...SHOULDERS])) return { ready: false, hint: NOT_VISIBLE_HINT }
