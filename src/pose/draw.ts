@@ -63,3 +63,28 @@ export function jointStatuses(checks: { status: CheckStatus; joints: number[] }[
   }
   return out
 }
+
+/** Draws a target pose (the teacher's "ghost") on top of what's already on the canvas. */
+export function drawGhost(ctx: CanvasRenderingContext2D, points: Point[]) {
+  const { height } = ctx.canvas
+  const px = (p: Point) => [p.x * height, p.y * height] as const
+  const visible = (p: Point | undefined): p is Point => !!p && (p.visibility ?? 1) > 0.4
+  const lineWidth = Math.max(4, height / 110)
+  ctx.save()
+  ctx.lineCap = 'round'
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)'
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
+  ctx.shadowBlur = 6
+  ctx.lineWidth = lineWidth
+  ctx.setLineDash([lineWidth * 1.5, lineWidth * 1.5])
+  for (const [a, b] of CONNECTIONS) {
+    const pa = points[a]
+    const pb = points[b]
+    if (!visible(pa) || !visible(pb)) continue
+    ctx.beginPath()
+    ctx.moveTo(...px(pa))
+    ctx.lineTo(...px(pb))
+    ctx.stroke()
+  }
+  ctx.restore()
+}

@@ -79,7 +79,8 @@ button:disabled {
   opacity: 0.6;
   cursor: progress;
 }
-button.primary {
+button.primary,
+.button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;

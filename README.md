@@ -8,6 +8,30 @@ Everything runs in the browser. Pose detection uses
 [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker),
 so no video ever leaves your device.
 
+## Learn a choreography
+
+Add a dance tutorial and learn it section by section:
+
+1. **Add the tutorial.**
+   - *Upload a video* (works everywhere, including phones).
+   - *Paste a YouTube link* (computer, Chrome/Edge): browsers don't let apps read
+     YouTube's video, so the app plays it once while you share the tab and watches
+     the teacher in the captured picture.
+   - *TikTok / Instagram links* can't be read by other websites; the app explains how
+     to save or screen-record the video and upload that instead.
+2. The app extracts the teacher's pose (10× per second) and splits the dance into
+   3–8 second sections at natural pauses. Everything is saved on the device
+   (IndexedDB), including your progress.
+3. For each section: **Watch** it slowed down and looped → **Follow along** while a
+   white "ghost" of the teacher is drawn on your body, with live hints like "Lift your
+   right arm higher" → dance it **From memory** with only the music. A section is
+   learned at 70% from memory; then do a **run-through** of everything so far.
+
+Poses are compared by limb directions as they appear on screen, so size and position
+don't matter, and copying a teacher who faces you like a mirror just works. *Flip
+video* handles tutorials that are filmed from behind or already mirrored. A short
+delay behind the teacher (up to 0.6 s) isn't penalised.
+
 ## Movements
 
 Movements are tracked over time: every repetition is counted, judged, and its
@@ -17,6 +41,7 @@ use *Analyse a video* to review a recording (played at half speed for accuracy).
 | Movement | Camera | What it checks per rep |
 | --- | --- | --- |
 | 🌀 **Pirouette** | Facing | Counts rotations (single, double…) · passé held through the turn · standing leg straight · upright · steady landing |
+| 🌀 **Barrel turn** | Facing | Counts rotations · torso kept tilted (hinged from the hips) · arms long · standing leg strong · steady landing |
 | 💪 **Push-up** | Side-on, camera at floor height | Depth (elbows to ~90°) · hips not sagging or piking · controlled tempo |
 
 Turns are counted from the face disappearing and the shoulders swapping sides as
@@ -101,6 +126,10 @@ camera → MediaPipe (33 body landmarks) → smoothing → pose rules → deboun
 - `src/movements/*.ts` hold the movements. Each creates a tracker: a small state
   machine fed every frame that detects the start and end of a repetition, collects
   measurements in between and returns a verdict per rep.
+- `src/tutorial/` holds the tutorial feature: pose extraction from a file or a shared
+  tab (`extract.ts`), section splitting (`track.ts`), pose comparison, hints and the
+  ghost (`compare.ts`), attempt scoring (`scoring.ts`) and on-device storage
+  (`library.ts`).
 - `src/pose/engine.ts` smooths landmarks, debounces flickering results, scores
   form and runs the hold timer. `src/pose/coach.ts` decides what to say aloud
   without nagging.

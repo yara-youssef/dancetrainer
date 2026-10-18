@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, shallowRef } from 'vue'
+import { describeCameraError as describeError, useCamera } from '@/composables/useCamera'
 import type { CheckStatus } from '@/poses'
 import type { MovementFeedback, MovementTracker } from '@/movements'
 import { isMovement, type Exercise } from '@/exercises'
@@ -19,7 +20,6 @@ defineEmits<{ back: [] }>()
 
 /** camera: live; clip: an uploaded video; photo: a single uploaded image. */
 type Source = 'none' | 'camera' | 'clip' | 'photo'
-type Facing = 'user' | 'environment'
 
 const movement = isMovement(props.exercise) ? props.exercise : null
 const pose = isMovement(props.exercise) ? null : props.exercise
@@ -31,8 +31,6 @@ const feedback = shallowRef<Feedback | null>(null)
 const moveFeedback = shallowRef<MovementFeedback | null>(null)
 const clipEnded = ref(false)
 const voiceOn = ref(true)
-const facing = ref<Facing>('user')
-const mirror = ref(true)
 const mediaUrl = ref('')
 const voices = shallowRef<SpeechSynthesisVoice[]>([])
 const voiceName = ref(savedVoiceName() ?? '')
@@ -41,8 +39,8 @@ const video = ref<HTMLVideoElement>()
 const photo = ref<HTMLImageElement>()
 const canvas = ref<HTMLCanvasElement>()
 
-let stream: MediaStream | null = null
-let wakeLock: WakeLockSentinel | null = null
+const camera = useCamera(video)
+const { mirror } = camera
 let rafId = 0
 let running = false
 let engine: FeedbackEngine | null = null
@@ -104,22 +102,11 @@ async function startCamera() {
   try {
     // Speaking inside the click handler unlocks speech on mobile browsers.
     if (voiceOn.value) speak(`Let's practise ${props.exercise.name.split(' (')[0]}.`)
-    const [media] = await Promise.all([
-      navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: facing.value }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      }),
-      loadDetector(),
-    ])
-    stream = media
     source.value = 'camera'
     await nextTick()
-    const v = video.value!
-    v.srcObject = stream
-    await v.play()
+    await Promise.all([camera.start(), loadDetector()])
     resetAnalysis()
     running = true
-    keepAwake()
     loop()
   } catch (e) {
     error.value = describeError(e)
@@ -130,10 +117,15 @@ async function startCamera() {
 }
 
 async function switchCamera() {
-  facing.value = facing.value === 'user' ? 'environment' : 'user'
-  // The selfie camera feels natural mirrored; the back camera should not be.
-  mirror.value = facing.value === 'user'
-  await startCamera()
+  running = false
+  try {
+    await camera.switchCamera()
+    running = true
+    loop()
+  } catch (e) {
+    error.value = describeError(e)
+    stop()
+  }
 }
 
 let lastVideoTime = -1
@@ -261,28 +253,12 @@ function draw(frame: PoseFrame | null, joints: Map<number, CheckStatus>, width: 
   drawSkeleton(c.getContext('2d')!, frame?.image ?? null, joints)
 }
 
-/** Stop the phone screen from dimming mid-pose. */
-async function keepAwake() {
-  try {
-    wakeLock = (await navigator.wakeLock?.request('screen')) ?? null
-  } catch {
-    wakeLock = null // Not supported or denied: not essential.
-  }
-}
-
-function onVisibility() {
-  if (document.visibilityState === 'visible' && running && live.value) keepAwake()
-}
-
 function stop() {
   running = false
   cancelAnimationFrame(rafId)
-  stream?.getTracks().forEach((t) => t.stop())
-  stream = null
+  camera.stop()
   video.value?.pause()
   lastVideoTime = -1
-  wakeLock?.release().catch(() => {})
-  wakeLock = null
   stopSpeaking()
   if (source.value === 'camera') {
     source.value = 'none'
@@ -302,21 +278,9 @@ function toggleVoice() {
   if (!voiceOn.value) stopSpeaking()
 }
 
-function describeError(e: unknown): string {
-  const name = (e as { name?: string })?.name
-  if (name === 'NotAllowedError') return 'Camera permission was denied. Allow camera access in your browser and try again.'
-  if (name === 'NotFoundError') return 'No camera was found on this device.'
-  if (name === 'NotReadableError') return 'The camera is in use by another app.'
-  if (name === 'NotSupportedError') return "This video format can't be played in your browser."
-  if (!window.isSecureContext) return 'The camera only works over HTTPS (or on localhost).'
-  return `Something went wrong: ${(e as Error)?.message ?? e}`
-}
-
-onMounted(() => document.addEventListener('visibilitychange', onVisibility))
 onBeforeUnmount(() => {
   stop()
   stopWatchingVoices()
-  document.removeEventListener('visibilitychange', onVisibility)
   if (mediaUrl.value) URL.revokeObjectURL(mediaUrl.value)
 })
 </script>
