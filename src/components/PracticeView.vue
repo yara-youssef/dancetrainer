@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import type { CheckStatus, PoseDefinition } from '@/poses'
+import type { CheckStatus } from '@/poses'
+import type { MovementFeedback, MovementTracker } from '@/movements'
+import { isMovement, type Exercise } from '@/exercises'
 import { detectImage, detectVideo, loadDetector } from '@/pose/detector'
 import { FeedbackEngine, type Feedback } from '@/pose/engine'
-import { VoiceCoach } from '@/pose/coach'
+import { MovementVoice, VoiceCoach } from '@/pose/coach'
 import { saveVoiceName, savedVoiceName, speak, stopSpeaking, watchVoices } from '@/pose/voice'
 import { drawSkeleton, jointStatuses } from '@/pose/draw'
 import { headline } from '@/pose/banner'
 import type { PoseFrame } from '@/pose/landmarks'
 import FeedbackPanel from './FeedbackPanel.vue'
+import MovementPanel from './MovementPanel.vue'
 import PoseFigure from './PoseFigure.vue'
 
-const props = defineProps<{ pose: PoseDefinition }>()
+const props = defineProps<{ exercise: Exercise }>()
 defineEmits<{ back: [] }>()
 
-type Source = 'none' | 'camera' | 'photo'
+/** camera: live; clip: an uploaded video; photo: a single uploaded image. */
+type Source = 'none' | 'camera' | 'clip' | 'photo'
 type Facing = 'user' | 'environment'
+
+const movement = isMovement(props.exercise) ? props.exercise : null
+const pose = isMovement(props.exercise) ? null : props.exercise
 
 const source = ref<Source>('none')
 const loading = ref(false)
 const error = ref('')
 const feedback = shallowRef<Feedback | null>(null)
+const moveFeedback = shallowRef<MovementFeedback | null>(null)
+const clipEnded = ref(false)
 const voiceOn = ref(true)
 const facing = ref<Facing>('user')
 const mirror = ref(true)
-const photoUrl = ref('')
+const mediaUrl = ref('')
 const voices = shallowRef<SpeechSynthesisVoice[]>([])
 const voiceName = ref(savedVoiceName() ?? '')
 
@@ -36,12 +45,18 @@ let stream: MediaStream | null = null
 let wakeLock: WakeLockSentinel | null = null
 let rafId = 0
 let running = false
-let engine = new FeedbackEngine(props.pose)
+let engine: FeedbackEngine | null = null
+let tracker: MovementTracker | null = null
 let coach = new VoiceCoach()
+let moveVoice = new MovementVoice()
 
 const live = computed(() => source.value === 'camera')
+const playing = computed(() => source.value === 'camera' || source.value === 'clip')
 const mirrored = computed(() => live.value && mirror.value)
-const banner = computed(() => headline(feedback.value, live.value))
+const banner = computed(() => {
+  if (movement) return moveFeedback.value?.headline ?? { tone: 'info' as const, text: 'Waiting for the camera…' }
+  return headline(feedback.value, playing.value)
+})
 const highlight = computed<Map<number, CheckStatus>>(() => {
   const issue = feedback.value?.topIssue
   if (!issue) return new Map()
@@ -49,6 +64,17 @@ const highlight = computed<Map<number, CheckStatus>>(() => {
   // Left/right landmark pairs are adjacent indices (odd = left, even = right).
   const both = issue.joints.flatMap((j) => (j === 0 ? [j] : [j, j % 2 ? j + 1 : j - 1]))
   return new Map(both.map((j) => [j, issue.status]))
+})
+const chips = computed(() => {
+  if (movement) {
+    const reps = moveFeedback.value?.reps ?? []
+    if (!reps.length) return []
+    const plural = reps.length === 1 ? '' : 's'
+    return [`${reps.length} ${movement.unit}${plural}`, `${reps.filter((r) => r.ok).length} clean`]
+  }
+  const fb = feedback.value
+  if (!playing.value || fb?.phase !== 'checking') return []
+  return [`${fb.score}% form`, `⏱ ${fb.holdSeconds.toFixed(1)}s`]
 })
 
 const stopWatchingVoices = watchVoices((list) => {
@@ -62,13 +88,22 @@ function chooseVoice(name: string) {
   if (voiceOn.value) speak('This is how I will sound.')
 }
 
+function resetAnalysis() {
+  engine = pose ? new FeedbackEngine(pose) : null
+  tracker = movement ? movement.createTracker() : null
+  coach = new VoiceCoach()
+  moveVoice = new MovementVoice()
+  feedback.value = null
+  moveFeedback.value = null
+}
+
 async function startCamera() {
   stop()
   error.value = ''
   loading.value = true
   try {
     // Speaking inside the click handler unlocks speech on mobile browsers.
-    if (voiceOn.value) speak(`Let's practise ${props.pose.name.split(' (')[0]}.`)
+    if (voiceOn.value) speak(`Let's practise ${props.exercise.name.split(' (')[0]}.`)
     const [media] = await Promise.all([
       navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: facing.value }, width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -82,8 +117,7 @@ async function startCamera() {
     const v = video.value!
     v.srcObject = stream
     await v.play()
-    engine = new FeedbackEngine(props.pose)
-    coach = new VoiceCoach()
+    resetAnalysis()
     running = true
     keepAwake()
     loop()
@@ -106,15 +140,20 @@ let lastVideoTime = -1
 async function loop() {
   if (!running) return
   const v = video.value
+  if (v && source.value === 'clip' && v.ended) {
+    running = false
+    clipEnded.value = true
+    return
+  }
   if (v && v.readyState >= 2 && v.currentTime !== lastVideoTime) {
     lastVideoTime = v.currentTime
     const now = performance.now()
+    // Uploaded clips are judged on their own clock so slow playback doesn't distort timing.
+    const t = source.value === 'clip' ? v.currentTime * 1000 : now
     try {
       const frame = await detectVideo(v, now)
       if (!running) return
-      render(frame, engine.update(frame, now), v.videoWidth, v.videoHeight)
-      const line = coach.next(feedback.value!, now)
-      if (line && voiceOn.value) speak(line)
+      analyse(frame, t, v.videoWidth, v.videoHeight)
     } catch (e) {
       error.value = describeError(e)
       stop()
@@ -124,24 +163,41 @@ async function loop() {
   rafId = requestAnimationFrame(loop)
 }
 
+function analyse(frame: PoseFrame | null, t: number, width: number, height: number) {
+  let joints: Map<number, CheckStatus>
+  let line: string | null
+  if (tracker) {
+    const fb = tracker.update(frame, t)
+    moveFeedback.value = fb
+    joints = fb.joints
+    line = moveVoice.next(fb, t)
+  } else {
+    const fb = engine!.update(frame, t)
+    feedback.value = fb
+    joints = fb.phase === 'checking' ? jointStatuses(fb.checks) : new Map()
+    line = coach.next(fb, t)
+  }
+  draw(frame, joints, width, height)
+  if (line && voiceOn.value) speak(line)
+}
+
 async function onPhoto(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  ;(event.target as HTMLInputElement).value = ''
-  if (!file) return
+  const file = takeFile(event)
+  if (!file || !pose) return
   stop()
   error.value = ''
   loading.value = true
   try {
-    if (photoUrl.value) URL.revokeObjectURL(photoUrl.value)
-    photoUrl.value = URL.createObjectURL(file)
+    setMedia(file)
     source.value = 'photo'
     await nextTick()
     const img = photo.value!
     await img.decode()
     const frame = await detectImage(img)
-    const fb = new FeedbackEngine(props.pose, { debounceMs: 0, smoothing: 1 }).update(frame, 0)
+    const fb = new FeedbackEngine(pose, { debounceMs: 0, smoothing: 1 }).update(frame, 0)
     if (!frame) fb.hint = "Couldn't find a person in this photo. Try one with your whole body visible."
-    render(frame, fb, img.naturalWidth, img.naturalHeight)
+    feedback.value = fb
+    draw(frame, fb.phase === 'checking' ? jointStatuses(fb.checks) : new Map(), img.naturalWidth, img.naturalHeight)
   } catch (e) {
     error.value = describeError(e)
   } finally {
@@ -149,15 +205,59 @@ async function onPhoto(event: Event) {
   }
 }
 
-function render(frame: PoseFrame | null, fb: Feedback, width: number, height: number) {
-  feedback.value = fb
+async function onClip(event: Event) {
+  const file = takeFile(event)
+  if (!file) return
+  stop()
+  error.value = ''
+  loading.value = true
+  try {
+    if (voiceOn.value) speak('Analysing your video.')
+    await loadDetector()
+    setMedia(file)
+    source.value = 'clip'
+    await nextTick()
+    await playClip()
+  } catch (e) {
+    error.value = describeError(e)
+    stop()
+  } finally {
+    loading.value = false
+  }
+}
+
+async function playClip() {
+  const v = video.value!
+  v.src = mediaUrl.value
+  // Half speed gives the pose model more frames of fast movements like turns.
+  v.playbackRate = 0.5
+  v.currentTime = 0
+  clipEnded.value = false
+  resetAnalysis()
+  await v.play()
+  running = true
+  loop()
+}
+
+function takeFile(event: Event): File | undefined {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  return file
+}
+
+function setMedia(file: File) {
+  if (mediaUrl.value) URL.revokeObjectURL(mediaUrl.value)
+  mediaUrl.value = URL.createObjectURL(file)
+}
+
+function draw(frame: PoseFrame | null, joints: Map<number, CheckStatus>, width: number, height: number) {
   const c = canvas.value
   if (!c) return
   if (c.width !== width || c.height !== height) {
     c.width = width
     c.height = height
   }
-  const joints = fb.phase === 'checking' ? jointStatuses(fb.checks) : new Map()
   drawSkeleton(c.getContext('2d')!, frame?.image ?? null, joints)
 }
 
@@ -171,7 +271,7 @@ async function keepAwake() {
 }
 
 function onVisibility() {
-  if (document.visibilityState === 'visible' && running) keepAwake()
+  if (document.visibilityState === 'visible' && running && live.value) keepAwake()
 }
 
 function stop() {
@@ -179,6 +279,7 @@ function stop() {
   cancelAnimationFrame(rafId)
   stream?.getTracks().forEach((t) => t.stop())
   stream = null
+  video.value?.pause()
   lastVideoTime = -1
   wakeLock?.release().catch(() => {})
   wakeLock = null
@@ -186,7 +287,14 @@ function stop() {
   if (source.value === 'camera') {
     source.value = 'none'
     feedback.value = null
+    moveFeedback.value = null
   }
+}
+
+function resetCount() {
+  tracker = movement ? movement.createTracker() : null
+  moveVoice = new MovementVoice()
+  moveFeedback.value = null
 }
 
 function toggleVoice() {
@@ -199,6 +307,7 @@ function describeError(e: unknown): string {
   if (name === 'NotAllowedError') return 'Camera permission was denied. Allow camera access in your browser and try again.'
   if (name === 'NotFoundError') return 'No camera was found on this device.'
   if (name === 'NotReadableError') return 'The camera is in use by another app.'
+  if (name === 'NotSupportedError') return "This video format can't be played in your browser."
   if (!window.isSecureContext) return 'The camera only works over HTTPS (or on localhost).'
   return `Something went wrong: ${(e as Error)?.message ?? e}`
 }
@@ -208,15 +317,15 @@ onBeforeUnmount(() => {
   stop()
   stopWatchingVoices()
   document.removeEventListener('visibilitychange', onVisibility)
-  if (photoUrl.value) URL.revokeObjectURL(photoUrl.value)
+  if (mediaUrl.value) URL.revokeObjectURL(mediaUrl.value)
 })
 </script>
 
 <template>
   <section class="practice">
     <div class="topbar">
-      <button class="ghost" @click="$emit('back')">← All positions</button>
-      <h2>{{ pose.name }}</h2>
+      <button class="ghost" @click="$emit('back')">← All exercises</button>
+      <h2>{{ exercise.name }}</h2>
     </div>
 
     <div class="layout">
@@ -224,31 +333,30 @@ onBeforeUnmount(() => {
         <div class="stage" :class="{ empty: source === 'none', live }">
           <template v-if="source !== 'none'">
             <div class="media" :class="{ mirrored }">
-              <video v-if="source === 'camera'" ref="video" playsinline muted />
-              <img v-if="source === 'photo'" ref="photo" :src="photoUrl" alt="Your uploaded photo" />
+              <video v-if="playing" ref="video" playsinline muted />
+              <img v-if="source === 'photo'" ref="photo" :src="mediaUrl" alt="Your uploaded photo" />
               <canvas ref="canvas" />
             </div>
 
             <div class="hud">
               <div class="headline" :class="banner.tone" role="status" aria-live="polite">{{ banner.text }}</div>
               <div class="thumb" aria-hidden="true">
-                <PoseFigure :illustration="pose.illustration" :highlight="highlight" />
+                <PoseFigure :illustration="exercise.illustration" :highlight="highlight" />
               </div>
-              <div v-if="live && feedback?.phase === 'checking'" class="chips">
-                <span class="chip">{{ feedback.score }}% form</span>
-                <span class="chip">⏱ {{ feedback.holdSeconds.toFixed(1) }}s</span>
+              <div v-if="chips.length" class="chips">
+                <span v-for="c in chips" :key="c" class="chip">{{ c }}</span>
               </div>
             </div>
           </template>
 
           <div v-else class="setup">
             <div class="setup-figure">
-              <PoseFigure :illustration="pose.illustration" :title="`Illustration of ${pose.name}`" />
+              <PoseFigure :illustration="exercise.illustration" :title="`Illustration of ${exercise.name}`" />
             </div>
             <div class="setup-text">
-              <p class="tip"><strong>Camera setup:</strong> {{ pose.cameraTip }}</p>
+              <p class="tip"><strong>Camera setup:</strong> {{ exercise.cameraTip }}</p>
               <ul>
-                <li v-for="cue in pose.cues" :key="cue">{{ cue }}</li>
+                <li v-for="cue in exercise.cues" :key="cue">{{ cue }}</li>
               </ul>
             </div>
           </div>
@@ -259,7 +367,12 @@ onBeforeUnmount(() => {
           <button v-if="!live" class="primary" :disabled="loading" @click="startCamera">Start camera</button>
           <button v-else class="primary" @click="stop">Stop</button>
           <button v-if="live" class="ghost" @click="switchCamera">🔄 Switch camera</button>
+          <button v-if="source === 'clip' && clipEnded" class="ghost" @click="playClip">↺ Replay video</button>
           <label class="button ghost">
+            Analyse a video
+            <input type="file" accept="video/*" hidden @change="onClip" />
+          </label>
+          <label v-if="pose" class="button ghost">
             Analyse a photo
             <input type="file" accept="image/*" hidden @change="onPhoto" />
           </label>
@@ -280,10 +393,17 @@ onBeforeUnmount(() => {
       </div>
 
       <aside class="side">
-        <FeedbackPanel v-if="source !== 'none'" :feedback="feedback" :live="live" />
+        <template v-if="source !== 'none'">
+          <MovementPanel v-if="movement" :feedback="moveFeedback" :unit="movement.unit" @reset="resetCount" />
+          <FeedbackPanel v-else :feedback="feedback" :live="playing" />
+        </template>
         <div v-else class="about">
-          <p>{{ pose.summary }}</p>
-          <p class="muted">
+          <p>{{ exercise.summary }}</p>
+          <p v-if="movement" class="muted">
+            Start the camera and go. Each {{ movement.unit }} is counted and checked as you do it, and the result is read
+            aloud. You can also film yourself (slow motion helps with fast movements) and use <em>Analyse a video</em>.
+          </p>
+          <p v-else class="muted">
             Start the camera and get into position. Joints turn <span class="g">green</span> when they're right and
             <span class="r">red</span> when they need a correction, and the most important fix is read aloud.
           </p>

@@ -8,12 +8,27 @@ Everything runs in the browser. Pose detection uses
 [MediaPipe Pose Landmarker](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker),
 so no video ever leaves your device.
 
+## Movements
+
+Movements are tracked over time: every repetition is counted, judged, and its
+verdict read aloud ("3", "Double! Clean.", "Rep 4. Go lower…"). Film yourself and
+use *Analyse a video* to review a recording (played at half speed for accuracy).
+
+| Movement | Camera | What it checks per rep |
+| --- | --- | --- |
+| 🌀 **Pirouette** | Facing | Counts rotations (single, double…) · passé held through the turn · standing leg straight · upright · steady landing |
+| 💪 **Push-up** | Side-on, camera at floor height | Depth (elbows to ~90°) · hips not sagging or piking · controlled tempo |
+
+Turns are counted from the face disappearing and the shoulders swapping sides as
+you rotate. Fast turns can blur, so use good light, and the back camera on a phone.
+
 ## Positions
 
 | Position | Camera | What it checks |
 | --- | --- | --- |
 | 🩰 **Passé (retiré)** | Facing | Standing leg straight · toe at the standing knee · knee turned out · foot pointed · hips level · torso upright · shoulders level · arms softly rounded |
 | 🦢 **Arabesque** | Side-on | Standing leg straight · back leg stretched · back leg height · foot pointed · chest lifted · front arm forward at shoulder height |
+| 🩰 **Attitude derrière** | Side-on | Standing leg straight · back knee bent 90–130° · knee at hip height and above the foot · foot pointed · chest lifted · one arm en haut |
 | 🦶 **Relevé** | Side-on, camera low | Heels high · knees straight · body stacked over the feet · pelvis neutral (no seat out / hips forward) |
 | 🎀 **Plié in second** | Facing | Knee bend depth · knees tracking over toes · stance width · spine upright · pelvis level · arms in second, softly rounded |
 | ✨ **Tendu à la seconde** | Facing | Both legs straight · foot pointed · foot extended to the side · weight over standing leg · hips/shoulders level · arms in second |
@@ -83,6 +98,9 @@ camera → MediaPipe (33 body landmarks) → smoothing → pose rules → deboun
   a straight limb always looks straight in 2D, while the 3D estimate tends to
   under-read straight limbs. The catch is that a knee bending straight towards
   the camera can look straight from the front.
+- `src/movements/*.ts` hold the movements. Each creates a tracker: a small state
+  machine fed every frame that detects the start and end of a repetition, collects
+  measurements in between and returns a verdict per rep.
 - `src/pose/engine.ts` smooths landmarks, debounces flickering results, scores
   form and runs the hold timer. `src/pose/coach.ts` decides what to say aloud
   without nagging.

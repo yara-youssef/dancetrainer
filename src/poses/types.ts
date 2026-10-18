@@ -23,6 +23,10 @@ export interface Illustration {
   view: 'front' | 'side'
   /** Landmark index → [x, y] in the same layout as image landmarks (y down, figure ~1 tall). */
   points: Record<number, [number, number]>
+  /** For movements: a second position drawn faintly behind (e.g. the bottom of a push-up). */
+  ghost?: Record<number, [number, number]>
+  /** For turns: draws a rotation arrow around the figure. */
+  spin?: boolean
 }
 
 export type Preparation<C> =

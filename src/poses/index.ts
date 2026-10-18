@@ -1,5 +1,6 @@
 import { passe } from './passe'
 import { arabesque } from './arabesque'
+import { attitude } from './attitude'
 import { releve } from './releve'
 import { plie } from './plie'
 import { tendu } from './tendu'
@@ -13,6 +14,7 @@ import type { PoseDefinition } from './types'
 export const POSES: PoseDefinition[] = [
   passe,
   arabesque,
+  attitude,
   releve,
   plie,
   tendu,
