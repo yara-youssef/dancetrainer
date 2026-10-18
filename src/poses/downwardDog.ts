@@ -1,7 +1,7 @@
 import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
-import { angle3d, angle2d, angleFromHorizontal, dist2d } from '@/pose/geometry'
+import { angle2d, angleFromHorizontal, dist2d } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
-import { NOT_VISIBLE_HINT, isVisible, nearSide } from './common'
+import { NOT_VISIBLE_HINT, isVisible, nearSide, jointAngle } from './common'
 
 interface DogCtx {
   frame: PoseFrame
@@ -62,8 +62,8 @@ export const downwardDog = definePose<DogCtx>({
     {
       id: 'arms-straight',
       label: 'Arms straight',
-      evaluate({ world, s }): CheckResult {
-        const elbow = angle3d(world[s.shoulder]!, world[s.elbow]!, world[s.wrist]!)
+      evaluate({ frame, s }): CheckResult {
+        const elbow = jointAngle(frame, s.shoulder, s.elbow, s.wrist)
         const { status } = grade(elbow, { good: [163, 180], tolerance: 10 })
         return {
           status,
@@ -90,8 +90,8 @@ export const downwardDog = definePose<DogCtx>({
     {
       id: 'legs-straight',
       label: 'Legs straight',
-      evaluate({ world, s }): CheckResult {
-        const knee = angle3d(world[s.hip]!, world[s.knee]!, world[s.ankle]!)
+      evaluate({ frame, s }): CheckResult {
+        const knee = jointAngle(frame, s.hip, s.knee, s.ankle)
         const { status } = grade(knee, { good: [163, 180], tolerance: 13 })
         return {
           status,

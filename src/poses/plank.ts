@@ -1,7 +1,7 @@
 import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
-import { angle3d, angle2d, angleFromHorizontal, angleFromVertical, offsetBelowLine } from '@/pose/geometry'
+import { angle2d, angleFromHorizontal, angleFromVertical, offsetBelowLine } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
-import { NOT_VISIBLE_HINT, isVisible, nearSide } from './common'
+import { NOT_VISIBLE_HINT, isVisible, nearSide, jointAngle } from './common'
 
 interface PlankCtx {
   frame: PoseFrame
@@ -40,7 +40,7 @@ export const plank = definePose<PlankCtx>({
     if (!horizontal || !supported) {
       return { ready: false, hint: 'Get into a plank: hands under shoulders, body in one long line.' }
     }
-    const forearm = angle3d(frame.world[s.shoulder]!, frame.world[s.elbow]!, frame.world[s.wrist]!) < 130
+    const forearm = jointAngle(frame, s.shoulder, s.elbow, s.wrist) < 130
     const headDir = Math.sign(img[s.shoulder]!.x - img[s.ankle]!.x) || 1
     return { ready: true, ctx: { frame, img, world: frame.world, s, forearm, headDir } }
   },
@@ -85,8 +85,8 @@ export const plank = definePose<PlankCtx>({
     {
       id: 'arms',
       label: 'Arms strong',
-      evaluate({ world, s, forearm }): CheckResult {
-        const elbow = angle3d(world[s.shoulder]!, world[s.elbow]!, world[s.wrist]!)
+      evaluate({ frame, s, forearm }): CheckResult {
+        const elbow = jointAngle(frame, s.shoulder, s.elbow, s.wrist)
         if (forearm) {
           const { status } = grade(elbow, { good: [70, 110], tolerance: 15 })
           return {
@@ -108,8 +108,8 @@ export const plank = definePose<PlankCtx>({
     {
       id: 'legs-straight',
       label: 'Legs straight',
-      evaluate({ world, s }): CheckResult {
-        const knee = angle3d(world[s.hip]!, world[s.knee]!, world[s.ankle]!)
+      evaluate({ frame, s }): CheckResult {
+        const knee = jointAngle(frame, s.hip, s.knee, s.ankle)
         const { status } = grade(knee, { good: [165, 180], tolerance: 10 })
         return {
           status,

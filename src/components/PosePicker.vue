@@ -2,6 +2,11 @@
 import { POSES, type PoseDefinition } from '@/poses'
 
 defineEmits<{ select: [pose: PoseDefinition] }>()
+
+const groups = (['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
+  category,
+  poses: POSES.filter((p) => p.category === category),
+}))
 </script>
 
 <template>
@@ -10,13 +15,15 @@ defineEmits<{ select: [pose: PoseDefinition] }>()
       Pick a position to practise. Your camera watches your form and tells you what to fix, live.
       Everything runs on your device: no video leaves your browser.
     </p>
-    <div class="grid">
-      <button v-for="pose in POSES" :key="pose.id" class="card" @click="$emit('select', pose)">
-        <span class="emoji" aria-hidden="true">{{ pose.emoji }}</span>
-        <span class="category">{{ pose.category }}</span>
-        <span class="name">{{ pose.name }}</span>
-        <span class="summary">{{ pose.summary }}</span>
-      </button>
+    <div v-for="group in groups" :key="group.category" class="group">
+      <h2>{{ group.category }}</h2>
+      <div class="grid">
+        <button v-for="pose in group.poses" :key="pose.id" class="card" @click="$emit('select', pose)">
+          <span class="emoji" aria-hidden="true">{{ pose.emoji }}</span>
+          <span class="name">{{ pose.name }}</span>
+          <span class="summary">{{ pose.summary }}</span>
+        </button>
+      </div>
     </div>
   </section>
 </template>
@@ -57,11 +64,15 @@ defineEmits<{ select: [pose: PoseDefinition] }>()
 .emoji {
   font-size: 2rem;
 }
-.category {
-  font-size: 0.75rem;
+.group + .group {
+  margin-top: 2rem;
+}
+h2 {
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--accent);
+  margin: 0 0 0.75rem;
 }
 .name {
   font-size: 1.2rem;

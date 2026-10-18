@@ -12,9 +12,16 @@ so no video ever leaves your device.
 
 | Position | Camera | What it checks |
 | --- | --- | --- |
-| 🩰 **Passé (retiré)** | Face the camera | Standing leg straight · toe at the standing knee · knee turned out · foot pointed · hips level · torso upright · shoulders level · arms softly rounded |
-| 🐕 **Downward Dog** | Side view, camera at floor height | Inverted-V hip angle · arms straight · long line wrists→hips · legs straight · heels down · head relaxed |
-| 🧱 **Plank** (high or forearm) | Side view, camera at floor height | Hips not sagging/piking · hands (or elbows) under shoulders · arms · legs straight · neck neutral |
+| 🩰 **Passé (retiré)** | Facing | Standing leg straight · toe at the standing knee · knee turned out · foot pointed · hips level · torso upright · shoulders level · arms softly rounded |
+| 🦢 **Arabesque** | Side-on | Standing leg straight · back leg stretched · back leg height · foot pointed · chest lifted · front arm forward at shoulder height |
+| 🦶 **Relevé** | Side-on, camera low | Heels high · knees straight · body stacked over the feet · pelvis neutral (no seat out / hips forward) |
+| 🎀 **Plié in second** | Facing | Knee bend depth · knees tracking over toes · stance width · spine upright · pelvis level · arms in second, softly rounded |
+| ✨ **Tendu à la seconde** | Facing | Both legs straight · foot pointed · foot extended to the side · weight over standing leg · hips/shoulders level · arms in second |
+| 🌳 **Tree Pose** | Facing | Standing leg straight · foot off the knee joint · knee opening out · hips level · spine tall · palms together |
+| ⚔️ **Warrior II** | Facing | Front knee ~90° · knee over ankle · back leg straight · arms straight at shoulder height · torso upright |
+| 🐕 **Downward Dog** | Side-on, camera at floor height | Inverted-V hip angle · arms straight · long line wrists→hips · legs straight · heels down · head relaxed |
+| 🧱 **Plank** (high or forearm) | Side-on, camera at floor height | Hips not sagging/piking · hands (or elbows) under shoulders · arms · legs straight · neck neutral |
+| 📐 **Side Plank** (hand or forearm) | Facing, camera at floor height | Hips lifted in one line · support under the shoulder · supporting arm · legs straight · head in line |
 
 The skeleton turns green where your form is right and red/amber where it needs
 work. The most important correction is shown at the top and read aloud
@@ -52,6 +59,10 @@ camera → MediaPipe (33 body landmarks) → smoothing → pose rules → deboun
   camera?) and a list of checks in priority order. A check measures something
   (an angle, a height) and grades it against a band: inside is ✓, slightly
   outside is "almost", further out is a correction.
+- Joint angles use the larger of the 2D image angle and MediaPipe's 3D estimate:
+  a straight limb always looks straight in 2D, while the 3D estimate tends to
+  under-read straight limbs. The catch is that a knee bending straight towards
+  the camera can look straight from the front.
 - `src/pose/engine.ts` smooths landmarks, debounces flickering results, scores
   form and runs the hold timer. `src/pose/coach.ts` decides what to say aloud
   without nagging.
@@ -60,5 +71,6 @@ camera → MediaPipe (33 body landmarks) → smoothing → pose rules → deboun
 
 Create `src/poses/<name>.ts` with `definePose({...})` (see `plank.ts` for a
 compact example), add it to `src/poses/index.ts`, and add a few synthetic
-skeleton tests in `src/poses/__tests__/poses.spec.ts`. Thresholds are plain
+skeleton tests in `src/poses/__tests__/`. `__tests__/real/` holds landmarks
+MediaPipe produced from a real photo, so rules are also checked against real data. Thresholds are plain
 numbers in each check, so they're easy to tune once you've tried them on yourself.
