@@ -23,6 +23,8 @@ so no video ever leaves your device.
 | 🧱 **Plank** (high or forearm) | Side-on, camera at floor height | Hips not sagging/piking · hands (or elbows) under shoulders · arms · legs straight · neck neutral |
 | 📐 **Side Plank** (hand or forearm) | Facing, camera at floor height | Hips lifted in one line · support under the shoulder · supporting arm · legs straight · head in line |
 
+Each position has an illustration of the correct form (on the cards, on the
+setup screen, and as a thumbnail during practice that marks the body part to fix).
 The skeleton turns green where your form is right and red/amber where it needs
 work. The most important correction is shown at the top and read aloud
 (toggle with *Voice*). A hold timer tracks how long you keep the position with
@@ -37,8 +39,26 @@ npm test         # unit tests for the form rules
 npm run build    # type-check and production build
 ```
 
-Camera access needs `localhost` or HTTPS. To try it on your phone, deploy the
-`dist/` folder to any static host with HTTPS (e.g. GitHub Pages, Netlify).
+### On your phone
+
+Phone cameras are usually much better than laptop webcams. Browsers only allow
+camera access over HTTPS, so either:
+
+- **Deploy to GitHub Pages (recommended).** In the repo's *Settings → Pages*, set
+  *Source* to **GitHub Actions**. Every push to `main` then publishes the app to
+  `https://<user>.github.io/dancetrainer/`; open that on your phone.
+- **Run it from your computer over Wi-Fi.** Run `npm run cert` once (creates a
+  self-signed certificate in `.cert/`), then `npm run dev:phone` and open the
+  printed `https://<your-computer's-IP>:5173` address on your phone. Accept the
+  certificate warning.
+
+Prop the phone up so it sees your whole body. The feedback is shown in large
+text over the video so you can read it from a few metres away. *Switch camera*
+toggles between the selfie and the (usually sharper) back camera, and the screen
+stays awake while the camera runs.
+
+The voice coach always uses an English voice (otherwise browsers use the system
+language's voice, e.g. a German accent). Pick a different one from the *Voice* menu.
 
 The pose model (~9 MB) is downloaded from Google's model bucket on first use.
 To self-host it, download

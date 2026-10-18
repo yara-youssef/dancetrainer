@@ -1,4 +1,4 @@
-import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
+import { L, SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
 import { angle2d, angleFromHorizontal, angleFromVertical, offsetBelowLine } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
 import { NOT_VISIBLE_HINT, isVisible, nearSide, jointAngle } from './common'
@@ -18,7 +18,6 @@ export const plank = definePose<PlankCtx>({
   id: 'plank',
   name: 'Plank',
   category: 'Strength',
-  emoji: '🧱',
   summary: 'One straight line from head to heels, supported on straight arms (or forearms).',
   cameraTip: 'Put the camera at floor height to your side, so it sees you in profile from head to heels.',
   cues: [
@@ -28,6 +27,33 @@ export const plank = definePose<PlankCtx>({
     'Legs straight and strong',
     'Neck long: head in line with the spine',
   ],
+
+  illustration: {
+    view: 'side',
+    points: {
+      [L.NOSE]: [0.21, 0.6],
+      [L.LEFT_EAR]: [0.24, 0.58],
+      [L.LEFT_SHOULDER]: [0.3, 0.6],
+      [L.LEFT_ELBOW]: [0.3, 0.7],
+      [L.LEFT_WRIST]: [0.3, 0.8],
+      [L.LEFT_INDEX]: [0.26, 0.8],
+      [L.LEFT_HIP]: [0.55, 0.65],
+      [L.LEFT_KNEE]: [0.72, 0.685],
+      [L.LEFT_ANKLE]: [0.88, 0.72],
+      [L.LEFT_HEEL]: [0.89, 0.7],
+      [L.LEFT_FOOT_INDEX]: [0.87, 0.8],
+      [L.RIGHT_EAR]: [0.26, 0.58],
+      [L.RIGHT_SHOULDER]: [0.32, 0.6],
+      [L.RIGHT_ELBOW]: [0.32, 0.7],
+      [L.RIGHT_WRIST]: [0.32, 0.8],
+      [L.RIGHT_INDEX]: [0.28, 0.8],
+      [L.RIGHT_HIP]: [0.57, 0.65],
+      [L.RIGHT_KNEE]: [0.74, 0.685],
+      [L.RIGHT_ANKLE]: [0.9, 0.72],
+      [L.RIGHT_HEEL]: [0.91, 0.7],
+      [L.RIGHT_FOOT_INDEX]: [0.89, 0.8],
+    },
+  },
 
   prepare(frame) {
     const s = SIDES[nearSide(frame)]

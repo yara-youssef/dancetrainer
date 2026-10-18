@@ -1,4 +1,4 @@
-import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
+import { L, SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
 import { angle2d, angleFromHorizontal, dist2d } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
 import { NOT_VISIBLE_HINT, isVisible, nearSide, jointAngle } from './common'
@@ -15,7 +15,6 @@ export const downwardDog = definePose<DogCtx>({
   id: 'downward-dog',
   name: 'Downward Dog',
   category: 'Yoga',
-  emoji: '🐕',
   summary: 'An inverted V: hips high, long spine, straight arms and legs, heels reaching down.',
   cameraTip: 'Put the camera at floor height to your side, so it sees you in profile from hands to heels.',
   cues: [
@@ -26,6 +25,33 @@ export const downwardDog = definePose<DogCtx>({
     'Heels reaching toward the floor',
     'Head relaxed between the arms',
   ],
+
+  illustration: {
+    view: 'side',
+    points: {
+      [L.NOSE]: [0.28, 0.69],
+      [L.LEFT_EAR]: [0.3, 0.66],
+      [L.LEFT_SHOULDER]: [0.34, 0.6],
+      [L.LEFT_ELBOW]: [0.27, 0.75],
+      [L.LEFT_WRIST]: [0.2, 0.9],
+      [L.LEFT_INDEX]: [0.16, 0.9],
+      [L.LEFT_HIP]: [0.55, 0.3],
+      [L.LEFT_KNEE]: [0.67, 0.6],
+      [L.LEFT_ANKLE]: [0.78, 0.88],
+      [L.LEFT_HEEL]: [0.8, 0.89],
+      [L.LEFT_FOOT_INDEX]: [0.74, 0.91],
+      [L.RIGHT_EAR]: [0.32, 0.66],
+      [L.RIGHT_SHOULDER]: [0.36, 0.6],
+      [L.RIGHT_ELBOW]: [0.29, 0.75],
+      [L.RIGHT_WRIST]: [0.22, 0.9],
+      [L.RIGHT_INDEX]: [0.18, 0.9],
+      [L.RIGHT_HIP]: [0.57, 0.3],
+      [L.RIGHT_KNEE]: [0.69, 0.6],
+      [L.RIGHT_ANKLE]: [0.8, 0.88],
+      [L.RIGHT_HEEL]: [0.82, 0.89],
+      [L.RIGHT_FOOT_INDEX]: [0.76, 0.91],
+    },
+  },
 
   prepare(frame) {
     const s = SIDES[nearSide(frame)]

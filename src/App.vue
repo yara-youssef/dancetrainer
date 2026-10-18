@@ -34,4 +34,15 @@ h1 {
 .tagline {
   color: var(--muted);
 }
+@media (max-width: 560px) {
+  header {
+    padding: 0.75rem 0 0.75rem;
+  }
+  h1 {
+    font-size: 1.25rem;
+  }
+  .tagline {
+    display: none;
+  }
+}
 </style>

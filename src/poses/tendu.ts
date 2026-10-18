@@ -1,4 +1,4 @@
-import { SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
+import { L, SIDES, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
 import { angleFromVertical, midpoint } from '@/pose/geometry'
 import { definePose, fmtDeg, grade, type CheckResult } from './types'
 import {
@@ -29,7 +29,6 @@ export const tendu = definePose<TenduCtx>({
   id: 'tendu',
   name: 'Tendu à la seconde',
   category: 'Ballet',
-  emoji: '✨',
   summary: 'Weight on one straight leg, the other stretched out to the side with a fully pointed foot.',
   cameraTip: 'Face the camera, about 2–3 m away, with your whole body (feet included) in view.',
   cues: [
@@ -39,6 +38,33 @@ export const tendu = definePose<TenduCtx>({
     'Hips and shoulders level',
     'Arms open in second',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.5, 0.11],
+      [L.LEFT_EAR]: [0.53, 0.1],
+      [L.RIGHT_EAR]: [0.47, 0.1],
+      [L.LEFT_SHOULDER]: [0.58, 0.2],
+      [L.RIGHT_SHOULDER]: [0.42, 0.2],
+      [L.LEFT_ELBOW]: [0.68, 0.25],
+      [L.RIGHT_ELBOW]: [0.32, 0.25],
+      [L.LEFT_WRIST]: [0.76, 0.32],
+      [L.RIGHT_WRIST]: [0.24, 0.32],
+      [L.LEFT_INDEX]: [0.79, 0.34],
+      [L.RIGHT_INDEX]: [0.21, 0.34],
+      [L.LEFT_HIP]: [0.55, 0.5],
+      [L.RIGHT_HIP]: [0.45, 0.5],
+      [L.RIGHT_KNEE]: [0.45, 0.72],
+      [L.RIGHT_ANKLE]: [0.45, 0.94],
+      [L.RIGHT_HEEL]: [0.46, 0.96],
+      [L.RIGHT_FOOT_INDEX]: [0.4, 0.97],
+      [L.LEFT_KNEE]: [0.63, 0.71],
+      [L.LEFT_ANKLE]: [0.71, 0.92],
+      [L.LEFT_HEEL]: [0.7, 0.93],
+      [L.LEFT_FOOT_INDEX]: [0.73, 0.97],
+    },
+  },
 
   prepare(frame) {
     if (!isVisible(frame, [...LOWER_BODY, ...SHOULDERS])) return { ready: false, hint: NOT_VISIBLE_HINT }

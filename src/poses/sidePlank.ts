@@ -20,7 +20,6 @@ export const sidePlank = definePose<SidePlankCtx>({
   id: 'side-plank',
   name: 'Side Plank',
   category: 'Strength',
-  emoji: '📐',
   summary: 'Balance on one hand (or forearm) and the side of your feet with your body lifted in one straight line.',
   cameraTip: 'Put the camera at floor height in front of you, so your chest faces it and your whole body is in view.',
   cues: [
@@ -29,6 +28,33 @@ export const sidePlank = definePose<SidePlankCtx>({
     'Legs straight, feet stacked',
     'Head in line with the spine',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.2, 0.48],
+      [L.LEFT_EAR]: [0.21, 0.5],
+      [L.RIGHT_EAR]: [0.21, 0.46],
+      [L.LEFT_SHOULDER]: [0.3, 0.55],
+      [L.RIGHT_SHOULDER]: [0.3, 0.5],
+      [L.LEFT_ELBOW]: [0.3, 0.68],
+      [L.LEFT_WRIST]: [0.3, 0.82],
+      [L.LEFT_INDEX]: [0.26, 0.82],
+      [L.RIGHT_ELBOW]: [0.3, 0.38],
+      [L.RIGHT_WRIST]: [0.3, 0.25],
+      [L.RIGHT_INDEX]: [0.3, 0.21],
+      [L.LEFT_HIP]: [0.55, 0.66],
+      [L.RIGHT_HIP]: [0.55, 0.62],
+      [L.LEFT_KNEE]: [0.7, 0.72],
+      [L.RIGHT_KNEE]: [0.7, 0.685],
+      [L.LEFT_ANKLE]: [0.85, 0.78],
+      [L.RIGHT_ANKLE]: [0.85, 0.75],
+      [L.LEFT_HEEL]: [0.86, 0.8],
+      [L.RIGHT_HEEL]: [0.86, 0.77],
+      [L.LEFT_FOOT_INDEX]: [0.9, 0.8],
+      [L.RIGHT_FOOT_INDEX]: [0.9, 0.77],
+    },
+  },
 
   prepare(frame) {
     const img = frame.image

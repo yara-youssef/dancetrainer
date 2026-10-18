@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { POSES, type PoseDefinition } from '@/poses'
+import PoseFigure from './PoseFigure.vue'
 
 defineEmits<{ select: [pose: PoseDefinition] }>()
 
@@ -19,7 +20,7 @@ const groups = (['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
       <h2>{{ group.category }}</h2>
       <div class="grid">
         <button v-for="pose in group.poses" :key="pose.id" class="card" @click="$emit('select', pose)">
-          <span class="emoji" aria-hidden="true">{{ pose.emoji }}</span>
+          <span class="figure" aria-hidden="true"><PoseFigure :illustration="pose.illustration" /></span>
           <span class="name">{{ pose.name }}</span>
           <span class="summary">{{ pose.summary }}</span>
         </button>
@@ -61,8 +62,11 @@ const groups = (['Ballet', 'Yoga', 'Strength'] as const).map((category) => ({
   transform: translateY(-2px);
   border-color: var(--accent);
 }
-.emoji {
-  font-size: 2rem;
+.figure {
+  display: block;
+  width: 96px;
+  aspect-ratio: 1;
+  margin-bottom: 0.25rem;
 }
 .group + .group {
   margin-top: 2rem;
@@ -81,5 +85,31 @@ h2 {
 .summary {
   color: var(--muted);
   font-size: 0.9rem;
+}
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .card {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: 0.9rem;
+    align-items: center;
+    padding: 0.8rem;
+  }
+  .figure {
+    grid-row: 1 / 3;
+    width: 72px;
+    margin: 0;
+  }
+  .name {
+    align-self: end;
+  }
+  .summary {
+    align-self: start;
+    font-size: 0.85rem;
+  }
 }
 </style>

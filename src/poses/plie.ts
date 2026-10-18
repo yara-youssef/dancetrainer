@@ -30,7 +30,6 @@ export const plie = definePose<PlieCtx>({
   id: 'plie-second',
   name: 'Plié in second',
   category: 'Ballet',
-  emoji: '🎀',
   summary: 'Feet wide and turned out, knees bending open over the toes with an upright spine.',
   cameraTip: 'Face the camera, about 2–3 m away, with your whole body (feet included) in view.',
   cues: [
@@ -39,6 +38,33 @@ export const plie = definePose<PlieCtx>({
     'Spine upright, pelvis level',
     'Arms open in second, just below shoulder height',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.5, 0.18],
+      [L.LEFT_EAR]: [0.53, 0.17],
+      [L.RIGHT_EAR]: [0.47, 0.17],
+      [L.LEFT_SHOULDER]: [0.58, 0.27],
+      [L.RIGHT_SHOULDER]: [0.42, 0.27],
+      [L.LEFT_ELBOW]: [0.68, 0.32],
+      [L.RIGHT_ELBOW]: [0.32, 0.32],
+      [L.LEFT_WRIST]: [0.76, 0.39],
+      [L.RIGHT_WRIST]: [0.24, 0.39],
+      [L.LEFT_INDEX]: [0.79, 0.41],
+      [L.RIGHT_INDEX]: [0.21, 0.41],
+      [L.LEFT_HIP]: [0.55, 0.55],
+      [L.RIGHT_HIP]: [0.45, 0.55],
+      [L.LEFT_KNEE]: [0.68, 0.7],
+      [L.RIGHT_KNEE]: [0.32, 0.7],
+      [L.LEFT_ANKLE]: [0.68, 0.88],
+      [L.RIGHT_ANKLE]: [0.32, 0.88],
+      [L.LEFT_HEEL]: [0.66, 0.9],
+      [L.RIGHT_HEEL]: [0.34, 0.9],
+      [L.LEFT_FOOT_INDEX]: [0.73, 0.9],
+      [L.RIGHT_FOOT_INDEX]: [0.27, 0.9],
+    },
+  },
 
   prepare(frame) {
     if (!isVisible(frame, [...LOWER_BODY, ...SHOULDERS])) return { ready: false, hint: NOT_VISIBLE_HINT }

@@ -30,7 +30,6 @@ export const tree = definePose<TreeCtx>({
   id: 'tree',
   name: 'Tree Pose',
   category: 'Yoga',
-  emoji: '🌳',
   summary: 'Balance on one leg with the other foot pressed into the inner thigh or calf, palms together.',
   cameraTip: 'Face the camera, about 2–3 m away, with your whole body (feet included) in view.',
   cues: [
@@ -40,6 +39,33 @@ export const tree = definePose<TreeCtx>({
     'Hips level, spine tall',
     'Palms together at the heart or overhead',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.5, 0.11],
+      [L.LEFT_EAR]: [0.53, 0.1],
+      [L.RIGHT_EAR]: [0.47, 0.1],
+      [L.LEFT_SHOULDER]: [0.58, 0.2],
+      [L.RIGHT_SHOULDER]: [0.42, 0.2],
+      [L.LEFT_ELBOW]: [0.62, 0.36],
+      [L.RIGHT_ELBOW]: [0.38, 0.36],
+      [L.LEFT_WRIST]: [0.505, 0.33],
+      [L.RIGHT_WRIST]: [0.495, 0.33],
+      [L.LEFT_INDEX]: [0.503, 0.28],
+      [L.RIGHT_INDEX]: [0.497, 0.28],
+      [L.LEFT_HIP]: [0.55, 0.5],
+      [L.RIGHT_HIP]: [0.45, 0.5],
+      [L.RIGHT_KNEE]: [0.45, 0.72],
+      [L.RIGHT_ANKLE]: [0.45, 0.94],
+      [L.RIGHT_HEEL]: [0.45, 0.96],
+      [L.RIGHT_FOOT_INDEX]: [0.43, 0.98],
+      [L.LEFT_KNEE]: [0.72, 0.6],
+      [L.LEFT_ANKLE]: [0.5, 0.55],
+      [L.LEFT_HEEL]: [0.51, 0.53],
+      [L.LEFT_FOOT_INDEX]: [0.47, 0.56],
+    },
+  },
 
   prepare(frame) {
     if (!isVisible(frame, [...LOWER_BODY, ...SHOULDERS])) return { ready: false, hint: NOT_VISIBLE_HINT }

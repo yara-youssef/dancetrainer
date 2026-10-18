@@ -61,11 +61,3 @@ export class VoiceCoach {
     return text
   }
 }
-
-export function speak(text: string) {
-  if (typeof speechSynthesis === 'undefined') return
-  speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.rate = 1.05
-  speechSynthesis.speak(u)
-}

@@ -1,4 +1,4 @@
-import type { Point, PoseFrame, SideIndices } from '@/pose/landmarks'
+import { L, type Point, type PoseFrame, type SideIndices } from '@/pose/landmarks'
 import { dist2d } from '@/pose/geometry'
 import { definePose, grade, type CheckResult } from './types'
 import {
@@ -32,7 +32,6 @@ export const passe = definePose<PasseCtx>({
   id: 'passe',
   name: 'Passé (retiré)',
   category: 'Ballet',
-  emoji: '🩰',
   summary: 'Balance on one leg with the working toe drawn up to the standing knee, knee turned out.',
   cameraTip: 'Face the camera, about 2–3 m away, with your whole body (feet included) in view.',
   cues: [
@@ -43,6 +42,33 @@ export const passe = definePose<PasseCtx>({
     'Hips and shoulders square and level',
     'Arms softly rounded',
   ],
+
+  illustration: {
+    view: 'front',
+    points: {
+      [L.NOSE]: [0.5, 0.11],
+      [L.LEFT_EAR]: [0.53, 0.1],
+      [L.RIGHT_EAR]: [0.47, 0.1],
+      [L.LEFT_SHOULDER]: [0.58, 0.2],
+      [L.RIGHT_SHOULDER]: [0.42, 0.2],
+      [L.LEFT_ELBOW]: [0.64, 0.33],
+      [L.RIGHT_ELBOW]: [0.36, 0.33],
+      [L.LEFT_WRIST]: [0.57, 0.44],
+      [L.RIGHT_WRIST]: [0.43, 0.44],
+      [L.LEFT_INDEX]: [0.54, 0.46],
+      [L.RIGHT_INDEX]: [0.46, 0.46],
+      [L.LEFT_HIP]: [0.55, 0.5],
+      [L.RIGHT_HIP]: [0.45, 0.5],
+      [L.RIGHT_KNEE]: [0.45, 0.72],
+      [L.RIGHT_ANKLE]: [0.45, 0.94],
+      [L.RIGHT_HEEL]: [0.46, 0.96],
+      [L.RIGHT_FOOT_INDEX]: [0.4, 0.97],
+      [L.LEFT_KNEE]: [0.7, 0.62],
+      [L.LEFT_ANKLE]: [0.52, 0.69],
+      [L.LEFT_HEEL]: [0.53, 0.71],
+      [L.LEFT_FOOT_INDEX]: [0.47, 0.72],
+    },
+  },
 
   prepare(frame) {
     if (!isVisible(frame, [...LOWER_BODY, ...SHOULDERS])) return { ready: false, hint: NOT_VISIBLE_HINT }

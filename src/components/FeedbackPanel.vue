@@ -1,25 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Feedback } from '@/pose/engine'
 
-const props = defineProps<{ feedback: Feedback | null; live: boolean }>()
-
-const banner = computed(() => {
-  const fb = props.feedback
-  if (!fb) return { tone: 'info', text: 'Waiting for the camera…' }
-  if (fb.phase !== 'checking') return { tone: 'info', text: fb.hint ?? '' }
-  if (fb.topIssue?.status === 'bad') return { tone: 'bad', text: fb.topIssue.message ?? fb.topIssue.label }
-  if (fb.topIssue) return { tone: 'warn', text: `Almost! ${fb.topIssue.message ?? ''}` }
-  return { tone: 'good', text: props.live ? 'Looking great. Hold it!' : 'Looking great!' }
-})
+defineProps<{ feedback: Feedback | null; live: boolean }>()
 
 const icons = { good: '✓', warn: '!', bad: '✕', unknown: '–' } as const
 </script>
 
 <template>
   <div class="panel">
-    <div class="banner" :class="banner.tone" role="status" aria-live="polite">{{ banner.text }}</div>
-
     <div v-if="feedback?.phase === 'checking'" class="stats">
       <div class="stat">
         <span class="value">{{ feedback.score }}%</span>
@@ -59,30 +47,6 @@ const icons = { good: '✓', warn: '!', bad: '✕', unknown: '–' } as const
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-.banner {
-  padding: 1rem 1.1rem;
-  border-radius: 14px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.35;
-  border: 1px solid transparent;
-}
-.banner.info {
-  background: var(--info-bg);
-  color: var(--info);
-}
-.banner.good {
-  background: var(--good-bg);
-  color: var(--good);
-}
-.banner.warn {
-  background: var(--warn-bg);
-  color: var(--warn);
-}
-.banner.bad {
-  background: var(--bad-bg);
-  color: var(--bad);
 }
 .stats {
   display: flex;
