@@ -4,7 +4,7 @@ import { MOVEMENTS } from '@/movements'
 import type { Exercise } from '@/exercises'
 import PoseFigure from './PoseFigure.vue'
 
-defineEmits<{ select: [exercise: Exercise] }>()
+defineEmits<{ select: [exercise: Exercise]; tutorials: [] }>()
 
 const groups: { title: string; note?: string; items: Exercise[] }[] = [
   { title: 'Movement', note: 'Counted and checked rep by rep', items: MOVEMENTS },
@@ -21,6 +21,18 @@ const groups: { title: string; note?: string; items: Exercise[] }[] = [
       Pick a movement or a position to practise. Your camera watches your form and tells you what to fix, live.
       Everything runs on your device: no video leaves your browser.
     </p>
+    <button class="learn" @click="$emit('tutorials')">
+      <span class="learn-icon" aria-hidden="true">🎬</span>
+      <span class="learn-text">
+        <span class="learn-title">Learn a choreography</span>
+        <span class="learn-sub">
+          Upload a dance tutorial (or paste a YouTube link). Learn it section by section: watch, follow the teacher's
+          ghost on your camera, then dance it from memory.
+        </span>
+      </span>
+      <span class="learn-go" aria-hidden="true">→</span>
+    </button>
+
     <div v-for="group in groups" :key="group.title" class="group">
       <h2>{{ group.title }}<span v-if="group.note" class="note"> · {{ group.note }}</span></h2>
       <div class="grid">
@@ -97,6 +109,45 @@ h2 {
   color: var(--muted);
   font-size: 0.9rem;
 }
+.learn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 18px;
+  text-align: left;
+  justify-content: flex-start;
+  color: #fff;
+  border: none;
+  background: linear-gradient(135deg, #e0679a, #a8326a);
+  box-shadow: 0 6px 20px rgb(168 50 106 / 0.25);
+}
+.learn:hover {
+  filter: brightness(1.05);
+}
+.learn-icon {
+  font-size: 2rem;
+}
+.learn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+.learn-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.learn-sub {
+  font-size: 0.9rem;
+  opacity: 0.92;
+}
+.learn-go {
+  font-size: 1.5rem;
+}
+
 @media (max-width: 560px) {
   .grid {
     grid-template-columns: 1fr;

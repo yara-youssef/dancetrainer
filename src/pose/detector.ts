@@ -55,6 +55,30 @@ export async function detectImage(image: HTMLImageElement): Promise<PoseFrame | 
   return toFrame(lm.detect(image), image.naturalWidth / image.naturalHeight)
 }
 
+/**
+ * A separate pose detector for analysing another video (e.g. a dance tutorial), so
+ * its frames don't disturb the tracking of the user's camera.
+ */
+export class VideoAnalyser {
+  private ts = 0
+
+  private constructor(private lm: PoseLandmarker) {}
+
+  static async create(): Promise<VideoAnalyser> {
+    return new VideoAnalyser(await create('GPU').catch(() => create('CPU')))
+  }
+
+  detect(source: HTMLVideoElement | HTMLCanvasElement, aspect: number): PoseFrame | null {
+    // Timestamps must strictly increase; frames may come from seeking, so make our own.
+    this.ts = Math.max(this.ts + 1, Math.floor(performance.now()))
+    return toFrame(this.lm.detectForVideo(source, this.ts), aspect)
+  }
+
+  close() {
+    this.lm.close()
+  }
+}
+
 function toFrame(result: PoseLandmarkerResult, aspect: number): PoseFrame | null {
   const image = result.landmarks[0]
   const world = result.worldLandmarks[0]

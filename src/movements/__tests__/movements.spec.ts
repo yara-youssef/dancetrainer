@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { LANDMARK_COUNT, L, type Point, type PoseFrame } from '@/pose/landmarks'
+import { barrelTurn } from '../barrelTurn'
 import { pirouette } from '../pirouette'
 import { pushup } from '../pushup'
 import type { MovementFeedback } from '../types'
 
-type Coords = Record<number, [number, number]>
+type Coords = Record<number, [number, number] | [number, number, number]>
 const DT = 33
 
 function frame(coords: Coords, opts: { yaw?: number; dx?: number } = {}): PoseFrame {
@@ -16,16 +17,17 @@ function frame(coords: Coords, opts: { yaw?: number; dx?: number } = {}): PoseFr
   const image: Point[] = Array.from({ length: LANDMARK_COUNT }, (_, i) => {
     const c = coords[i]
     if (!c) return { x: 0.5, y: 0.5, z: 0, visibility: 0.1 }
-    const x = cx + (c[0] - cx) * Math.cos(yaw) + (opts.dx ?? 0)
-    const z = (c[0] - cx) * Math.sin(yaw)
+    const z0 = c[2] ?? 0
+    const x = cx + (c[0] - cx) * Math.cos(yaw) - z0 * Math.sin(yaw) + (opts.dx ?? 0)
+    const z = (c[0] - cx) * Math.sin(yaw) + z0 * Math.cos(yaw)
     const face = i <= 10
     return { x, y: c[1], z, visibility: face && !facingCamera ? 0.1 : 0.99 }
   })
   return { image, world: image.map((p) => ({ ...p })) }
 }
 
-function run(frames: PoseFrame[]): MovementFeedback[] {
-  const tracker = pirouette.createTracker()
+function run(frames: PoseFrame[], movement = pirouette): MovementFeedback[] {
+  const tracker = movement.createTracker()
   return frames.map((f, i) => tracker.update(f, i * DT))
 }
 
@@ -147,5 +149,46 @@ describe('push-up', () => {
   it('waits for a plank position', () => {
     const standing = frame({ ...top, [L.LEFT_SHOULDER]: [0.5, 0.2], [L.LEFT_ANKLE]: [0.5, 0.95], [L.LEFT_WRIST]: [0.5, 0.5] })
     expect(pushup.createTracker().update(standing, 0).hint).toMatch(/plank/)
+  })
+})
+
+describe('barrel turn', () => {
+  const upright = pirouette.illustration.points
+  // Hinged forward ~60° towards the camera: shoulders drop and come forward (negative z).
+  const tilted: Coords = {
+    ...upright,
+    [L.NOSE]: [0.5, 0.42, -0.3],
+    [L.LEFT_EAR]: [0.53, 0.41, -0.28],
+    [L.RIGHT_EAR]: [0.47, 0.41, -0.28],
+    [L.LEFT_SHOULDER]: [0.58, 0.35, -0.26],
+    [L.RIGHT_SHOULDER]: [0.42, 0.35, -0.26],
+    [L.LEFT_ELBOW]: [0.72, 0.38, -0.3],
+    [L.RIGHT_ELBOW]: [0.28, 0.38, -0.3],
+    [L.LEFT_WRIST]: [0.86, 0.41, -0.34],
+    [L.RIGHT_WRIST]: [0.14, 0.41, -0.34],
+  }
+  const standing = pirouette.illustration.points
+  const hold = (c: Coords, n: number) => Array.from({ length: n }, () => frame(c))
+  const spin = (c: Coords | ((i: number) => Coords), turns: number, n: number) =>
+    Array.from({ length: n }, (_, i) =>
+      frame(typeof c === 'function' ? c(i) : c, { yaw: ((i + 1) / n) * turns * 2 * Math.PI }),
+    )
+
+  it('counts a barrel turn with the torso held tilted', () => {
+    const fbs = run([...hold(standing, 15), ...hold(tilted, 5), ...spin(tilted, 1, 20), ...hold(standing, 35)], barrelTurn)
+    const r = fbs.at(-1)!.reps[0]!
+    expect(r.title).toBe('Single')
+    expect(r.faults).toEqual([])
+  })
+
+  it('notices coming up out of the tilt', () => {
+    const rising = (i: number) => (i < 6 ? tilted : upright)
+    const r = run([...hold(standing, 15), ...hold(tilted, 5), ...spin(rising, 1, 20), ...hold(standing, 35)], barrelTurn)
+      .at(-1)!.reps[0]!
+    expect(r.faults[0]).toMatch(/torso tilted/)
+  })
+
+  it('does not start from an upright pirouette', () => {
+    expect(run([...hold(standing, 15), ...spin(upright, 1, 20), ...hold(standing, 35)], barrelTurn).at(-1)!.reps).toEqual([])
   })
 })
